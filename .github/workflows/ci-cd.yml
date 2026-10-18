@@ -1,0 +1,60 @@
+name: University App CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Задание №3: Build
+      - name: Build
+        run: |
+          python -m compileall .
+
+      # Задание №4: Test
+      - name: Test
+        run: |
+          pytest
+
+      # Задание №5: Настройка Artifact
+      - name: Create package
+        run: |
+          zip -r university-app.zip app.py requirements.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: university-app
+          path: university-app.zip
+
+  # Задание №6: Deployment
+  deploy:
+    needs: build-and-test # Ждем успешного завершения job'а build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: university-app
+
+      - name: Deployment
+        run: |
+          mkdir -p deployment
+          unzip -o university-app.zip -d deployment
+          echo "Содержимое папки deployment:"
+          ls -la deployment/
